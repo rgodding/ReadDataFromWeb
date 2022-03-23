@@ -15,6 +15,17 @@ public class Rateinfo {
         desc=Desc;
         rate=Rate;
     }
+    public String getCode() {
+        return code;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public String getRate() {
+        return rate;
+    }
 
     @Override
     public String toString() {

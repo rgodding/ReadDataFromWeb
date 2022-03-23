@@ -15,4 +15,13 @@ public class Rateinfo {
         desc=Desc;
         rate=Rate;
     }
+
+    @Override
+    public String toString() {
+        return "Rateinfo{" +
+                "code='" + code + '\'' +
+                ", desc='" + desc + '\'' +
+                ", rate='" + rate + '\'' +
+                '}';
+    }
 }

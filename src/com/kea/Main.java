@@ -25,7 +25,7 @@ public class Main {
             i++;
 
             if (i>12 && i<181) {
-                extracted(sc, tempText);
+                getValutas(sc, tempText);
             }
         }
         //Retrieving the String from the String Buffer object
@@ -58,7 +58,6 @@ public class Main {
             }
         }
     }
-    //Menu
     private static void viewRates(){
         printArray();
     }
@@ -92,8 +91,7 @@ public class Main {
         }
         return null;
     }
-    //Process
-    private static void extracted(Scanner sc, String tempText) {
+    private static void getValutas(Scanner sc, String tempText) {
         if(tempText.contains("code")) {
             System.out.print(tempText.replaceAll("code=","").replaceAll("\"",""));
             code = tempText.replaceAll("code=","").replaceAll("\"","");
@@ -124,11 +122,11 @@ public class Main {
         if(tempText.contains("/>"))
         {
             System.out.println();
-            extracted();
+            tempValuta();
         }
 
     }
-    private static void extracted() {
+    private static void tempValuta() {
         rateinfos.add(new Rateinfo(code, desc, rate));
         code = null;
         desc = null;
@@ -139,6 +137,8 @@ public class Main {
             System.out.println(rateinfos.get(i));
         }
     }
+
+    //Processor
     private static int numberInput(){
         Scanner sc = new Scanner(System.in);
         System.out.print("type a number: ");
@@ -149,8 +149,6 @@ public class Main {
         }
         return Integer.parseInt(input);
     }
-
-    //Calculator
     private static double exchangeDKK(double amount, double foreignRate){
         return amount / (foreignRate/100);
     }

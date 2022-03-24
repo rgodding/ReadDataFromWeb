@@ -6,34 +6,66 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    private static String code;
-    private static String desc;
-    private static String rate;
-    private static ArrayList<Rateinfo> rateinfos =new ArrayList<Rateinfo>();
+    private static final ArrayList<Rateinfo> rateinfos =new ArrayList<>();
 
+    //Temporary storage of valuta information, refreshes with each line
+    private static String tempCode;
+    private static String tempDesc;
+    private static double tempRate;
+
+    //Getting valutas
     public static void main(String[] args) throws IOException {
         //Instantiating the URL class
         URL url = new URL("https://www.nationalbanken.dk/_vti_bin/DN/DataService.svc/CurrencyRatesXML?lang=da");
         //Retrieving the contents of the specified page
         Scanner sc = new Scanner(url.openStream());
         //Instantiating the StringBuffer class to hold the result
-//        StringBuffer sb = new StringBuffer();
         int i=0;
         while(sc.hasNext()) {
             String tempText=sc.next();
-//            sb.append(tempText);
             i++;
-
             if (i>12 && i<181) {
                 getValutas(sc, tempText);
             }
         }
-        //Retrieving the String from the String Buffer object
-//        String result = sb.toString();
-//        System.out.println(result);
+        //Start of user intractable code
         userMenu();
     }
+    private static void getValutas(Scanner sc, String tempText) {
+        if(tempText.contains("code")) {
+            System.out.print(tempText.replaceAll("code=","").replaceAll("\"",""));
+            tempCode = tempText.replaceAll("code=","").replaceAll("\"","");
+        }
+        else if(tempText.contains("desc")) {
+            tempText = tempText.replaceAll("desc=","").replaceAll("\"","").replaceAll("�","æ");
+            if(tempText.contains("Euro")) {
+                System.out.print(" " + tempText);
+                tempDesc = tempText;
+            } else {
+                tempText = tempText + " "+ sc.next();
+                tempText = tempText.replaceAll("\"","");
+                System.out.print(" " + tempText);
+                tempDesc = tempText;
+            }
+        }
+        else if (tempText.contains("rate")) {
+            tempText = tempText.replaceAll("rate=","").replaceAll("\"","");
+            System.out.print(" "+ tempText);
+            String temp = tempText;
+            if(!temp.equals("-")) {
+                String[] temp2 = temp.split(",");
+                tempRate = Double.parseDouble(temp2[0] + "." + temp2[1]);
+            }
+        }
+        if(tempText.contains("/>"))
+        {
+            System.out.println();
+            refreshValuta();
+        }
 
+    }
+
+    //User menu
     private static void userMenu(){
         while(true) {
             System.out.println("\nMenu:\n" +
@@ -43,13 +75,13 @@ public class Main {
                     "\n0: Exit program");
             switch (numberInput()) {
                 case 1:
-                    viewRates();
+                    printArray();
                     break;
                 case 2:
-                    exchangeDKK();
+                    exchange("DKK");
                     break;
                 case 3:
-                    exchangeForeign();
+                    exchange("notDKK");
                     break;
                 case 0:
                     System.exit(0);
@@ -58,88 +90,47 @@ public class Main {
             }
         }
     }
-    private static void viewRates(){
-        printArray();
-    }
-    private static void exchangeDKK(){
-        Rateinfo tempRate = findValuta();
-        while(tempRate == null){
-            tempRate = findValuta();
+    private static void exchange(String choice){
+        System.out.print("Which valuta will it be exchanged into?: ");
+        Rateinfo tempValuta = findValuta();
+        while(tempValuta==null){
+            System.out.print("please enter a valid valuta code: ");
+            tempValuta = findValuta();
         }
-        System.out.print("How many DKK will be exchanged?: ");
-        int input = numberInput();
-        System.out.println("the given amount will result in " + exchangeDKK(input, Double.parseDouble(tempRate.getRate())) + " in " + tempRate.getCode());
-    }
-    private static void exchangeForeign(){
-        Rateinfo tempRate = findValuta();
-        while(tempRate == null){
-            tempRate = findValuta();
+        System.out.println("The valuta chosen is, " + tempValuta.getDesc() + " with a rate of " + tempValuta.getRate());
+        System.out.print("How much needs to be exchanged?: ");
+        double amount = numberInput();
+        if(choice.equals("DKK")){
+            System.out.println("Exchanging " + amount + " of DKK gives you an amount of " +
+                    tempValuta.exchangeDKKto(amount) + " in " + tempValuta.getDesc());
         }
-        System.out.print("How many " + tempRate.getCode() + " will be exchanged?: ");
-        int input = numberInput();
-        System.out.println("the given amount of " + tempRate.getCode() + " results in " + exchangeForeign(Double.parseDouble(tempRate.getRate()), input) + " DKK");
+        else if (choice.equals("notDKK")){
+            System.out.println("Exchanging " + amount + " of " + tempValuta.getCode() + " gives you an amount of " +
+                    tempValuta.exchangeToDKK(amount) + " in DKK");
+        }
+    }
 
-    }
-    public static Rateinfo findValuta(){
+    //Services
+    private static Rateinfo findValuta(){
         Scanner sc = new Scanner(System.in);
-        System.out.print("which valuta: ");
         String input = sc.nextLine().toUpperCase();
-        for (int i = 0; i < rateinfos.size(); i++) {
-            if(input.equals(rateinfos.get(i).getCode())){
-                return rateinfos.get(i);
+        for (Rateinfo rateinfo : rateinfos) {
+            if (input.equals(rateinfo.getCode())) {
+                return rateinfo;
             }
         }
         return null;
     }
-    private static void getValutas(Scanner sc, String tempText) {
-        if(tempText.contains("code")) {
-            System.out.print(tempText.replaceAll("code=","").replaceAll("\"",""));
-            code = tempText.replaceAll("code=","").replaceAll("\"","");
-        }
-        else if(tempText.contains("desc")) {
-            tempText = tempText.replaceAll("desc=","").replaceAll("\"","").replaceAll("�","æ");
-            if(tempText.contains("Euro")) {
-                System.out.print(" " + tempText);
-                desc = tempText;
-            } else {
-                tempText = tempText + " "+ sc.next();
-                tempText = tempText.replaceAll("\"","");
-                System.out.print(" " + tempText);
-                desc = tempText;
-            }
-        }
-        else if (tempText.contains("rate")) {
-            tempText = tempText.replaceAll("rate=","").replaceAll("\"","");
-            System.out.print(" "+ tempText);
-            String temp = tempText;
-            if(!temp.equals("-")) {
-                String[] temp2 = temp.split(",");
-                rate = temp2[0] + "." + temp2[1];
-            } else {
-                rate = String.valueOf(0);
-            }
-        }
-        if(tempText.contains("/>"))
-        {
-            System.out.println();
-            tempValuta();
-        }
-
+    private static void refreshValuta() {
+        //Adding the valuta to an array, then refreshing the values for a new valuta to be recorded
+        rateinfos.add(new Rateinfo(tempCode, tempDesc, tempRate));
+        tempCode = null;
+        tempDesc = null;
+        tempRate = 0;
     }
-    private static void tempValuta() {
-        rateinfos.add(new Rateinfo(code, desc, rate));
-        code = null;
-        desc = null;
-        rate = null;
-    }
-    private static void printArray(){
-        for (int i = 0; i < rateinfos.size(); i++) {
-            System.out.println(rateinfos.get(i));
-        }
-    }
-
-    //Processor
     private static int numberInput(){
+        //User only able to input positive int values(haven't done that u can put in ´.´too.
+        //Prevents program for crashing when putting in invalid values
         Scanner sc = new Scanner(System.in);
         System.out.print("type a number: ");
         String input = sc.nextLine();
@@ -149,10 +140,9 @@ public class Main {
         }
         return Integer.parseInt(input);
     }
-    private static double exchangeDKK(double amount, double foreignRate){
-        return amount / (foreignRate/100);
-    }
-    private static double exchangeForeign(double foreignRate, double amount){
-        return amount * foreignRate/100;
+    private static void printArray(){
+        for (Rateinfo rateinfo : rateinfos) {
+            System.out.println(rateinfo);
+        }
     }
 }
